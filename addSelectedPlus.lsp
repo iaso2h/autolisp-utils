@@ -1,4 +1,6 @@
-(defun c:addSelectedPlus (/ debugMode debugTextInsertPoint ss sset sfirst typ) 
+(defun c:addSelectedPlus (/ debugMode debugTextInsertPoint ss ename ent eType) 
+  (vl-load-com)
+  (princ "\n")
   (defun *error* (msg) 
     (if osm (setvar 'osmode osm))
     (if (not (member msg '("Function cancelled" "quit / exit abort" "函数已取消"))) 
@@ -8,107 +10,119 @@
   )
 
   (setq debugMode nil)
-  (princ "\n")
 
-  (if (not (setq sset (ssget "_I"))) 
+  (if 
+    (not 
+      (setq ss (ssget "_I"))
+    )
+    (vl-catch-all-error-p 
+      (setq ss (vl-catch-all-apply 'ssget (list "_:S+.")))
+    )
+  )
+  (if ss 
     (progn 
-      (setq sset (entsel "\n请选择图元: "))
-      (setq sfirst nil)
-
-      (setq ss (car sset))
-      (setq typ (cdr (assoc 0 (entget ss))))
+      (setq ename (ssname ss 0))
+      (setq eType (cdr (assoc 0 (entget ename))))
       (cond 
         ;; Tangent {{{
         ;; 线图案
-        ((= typ "TCH_PATH_ARRAY") (command "._TLinePattern"))
+        ((= eType "TCH_PATH_ARRAY") (command "._TLinePattern"))
         ;; 用地红线（显示有错误）
-        ((= typ "TCH_AREAREDLINE") (command "._DrawRedLine"))
+        ((= eType "TCH_AREAREDLINE") (command "._DrawRedLine"))
         ;; 坐标标注
-        ((= typ "TCH_COORD") (command "._TCOORD"))
+        ((= eType "TCH_COORD") (command "._TCOORD"))
         ;; 图名标注
-        ((= typ "TCH_DRAWINGNAME") (command "._TGMAPNAME"))
+        ((= eType "TCH_DRAWINGNAME") (command "._TGMAPNAME"))
         ;; 云线
-        ((= typ "TCH_MODI") (command "._TGREVCLOUD"))
+        ((= eType "TCH_MODI") (command "._TGREVCLOUD"))
         ;; 连续标注
-        ((= typ "TCH_DIMENSION") (command "._TDimMP"))
-        ((= typ "TCH_DIMENSION2") (command "._TDimMP"))
+        ((= eType "TCH_DIMENSION") (command "._TDimMP"))
+        ((= eType "TCH_DIMENSION2") (command "._TDimMP"))
         ;; 标高标注
-        ((= typ "TCH_ELEVATION") (command "._TMELEV"))
+        ((= eType "TCH_ELEVATION") (command "._TMELEV"))
         ;; 天正单行文字
-        ((= typ "TCH_TEXT") (command "._TTEXT"))
+        ((= eType "TCH_TEXT") (command "._TTEXT"))
         ;; 天正多行文字
-        ((= typ "TCH_MTEXT") (command "._TMTEXT"))
+        ((= eType "TCH_MTEXT") (command "._TMTEXT"))
         ;; 引出标注
-        ((= typ "TCH_MULTILEADER") (command "._TGLEADER"))
+        ((= eType "TCH_MULTILEADER") (command "._TGLEADER"))
         ;; 门窗
-        ((= typ "TCH_OPENING") (command "._TOPENING"))
+        ((= eType "TCH_OPENING") (command "._TOPENING"))
+        ;; 门窗装饰套
+        ((= eType "TCH_OPENINGSLOT") (command "._TOpeningSlot"))
         ;; 箭头引注
-        ((= typ "TCH_ARROW") (command "._TGARROW"))
+        ((= eType "TCH_ARROW") (command "._TGARROW"))
         ;; 半径标注
-        ((= typ "TCH_RADIUSDIM") (command "._TDIMRAD")) ; TODO:
-        ;; ((= typ "TCH_RADIUSDIM") (command "._TDIMDIA"))
+        ((= eType "TCH_RADIUSDIM") (command "._TDIMRAD")) ; TODO:
+        ;; ((= eType "TCH_RADIUSDIM") (command "._TDIMDIA"))
         ;; 柱
-        ((= typ "TCH_COLUMN") (command "._TGCOLUMN"))
+        ((= eType "TCH_COLUMN") (command "._TGCOLUMN"))
         ;; 墙
-        ((= typ "TCH_WALL") (command "._TGWALL"))
+        ((= eType "TCH_WALL") (command "._TGWALL"))
         ;; 玻璃幕墙
-        ((= typ "TCH_CURTAIN_WALL") (command "._TGWALL"))
+        ((= eType "TCH_CURTAIN_WALL") (command "._TGWALL")) ;; TODO:
+        ;; 墙体切割
+        ((= eType "TCH_KATANA") (command "._TCH_KATANA"))
+        ;; 墙体造型
+        ((= eType "TCH_WALL_PATCH") (command "._TADDPATCH"))
         ;; 转角窗
-        ((= typ "TCH_CORNER_WINDOW") (command "._TCORNERWIN"))
+        ((= eType "TCH_CORNER_WINDOW") (command "._TCORNERWIN"))
         ;; 房间
-        ((= typ "TCH_SPACE") (command "._TUPDSPACE"))
+        ((= eType "TCH_SPACE") (command "._TUPDSPACE"))
         ;; 防火分区
-        ((= typ "TCH_FIREZONE") (command "._TFIREZONECREATE"))
+        ((= eType "TCH_FIREZONE") (command "._TFIREZONECREATE"))
         ;; 疏散路径
-        ((= typ "TCH_EVACPATH") (command "._TSPACEEVACUATEPATH"))
+        ((= eType "TCH_EVACPATH") (command "._TSPACEEVACUATEPATH"))
         ;; 楼层框
-        ((= typ "TCH_FLOORRECT") (command "._TFLOOR")) ;; TODO:
+        ((= eType "TCH_FLOORRECT") (command "._TFLOOR")) ;; TODO:
         ;; 任意坡顶
-        ((= typ "TCH_SLOPEROOF") (command "._TSLOPEROOF"))
+        ((= eType "TCH_SLOPEROOF") (command "._TSLOPEROOF"))
         ;; 老虎窗
-        ((= typ "TCH_DORMER") (command "._TDORMER"))
+        ((= eType "TCH_DORMER") (command "._TDORMER"))
         ;; 对称轴
-        ((= typ "TCH_SYMMETRY") (command "._TGSYMMETRICAL"))
+        ((= eType "TCH_SYMMETRY") (command "._TGSYMMETRICAL"))
         ;; 做法标注
-        ((= typ "TCH_COMPOSING") (command "._TGCOMPOSING"))
+        ((= eType "TCH_COMPOSING") (command "._TGCOMPOSING"))
         ;; 轴网标注
-        ((= typ "TCH_AXIS_LABEL") (command "._TSINGLEAXISDIM")) ; TODO:
+        ((= eType "TCH_AXIS_LABEL") (command "._TSINGLEAXISDIM")) ; TODO:
         ;; 索引图名
-        ((= typ "TCH_DRAWINGINDEX") (command "._TGINDEXDIM"))
+        ((= eType "TCH_DRAWINGINDEX") (command "._TGINDEXDIM"))
         ;; 指向索引
-        ((= typ "TCH_INDEXPOINTER") (command "._TINDEXPTR")) ; TODO:
+        ((= eType "TCH_INDEXPOINTER") (command "._TINDEXPTR")) ; TODO:
         ;; 剖切符号
-        ;; ((= typ "TCH_INDEXPOINTER") (command "._TINDEXPTR"))
+        ;; ((= eType "TCH_INDEXPOINTER") (command "._TINDEXPTR"))
         ;; 指北针
-        ((= typ "TCH_NORTHTHUMB") (command "._TNORTHTHUMB"))
+        ((= eType "TCH_NORTHTHUMB") (command "._TNORTHTHUMB"))
         ;; 内视符号
-        ((= typ "TCH_TDBINSIGHT") (command "._TGINSIGHT"))
+        ((= eType "TCH_TDBINSIGHT") (command "._TGINSIGHT"))
         ;; 切割线
-        ((= typ "TCH_CUT") (command "._TGSYMBCUT"))
+        ((= eType "TCH_CUT") (command "._TGSYMBCUT"))
         ;; 剖面剖切
-        ((= typ "TCH_SYMB_SECTION") (command "._TGSECTION"))
+        ((= eType "TCH_SYMB_SECTION") (command "._TGSECTION"))
         ;; 天正表格
-        ((= typ "TCH_SHEET") (command "._TNEWSHEET"))
+        ((= eType "TCH_SHEET") (command "._TNEWSHEET"))
         ;; 台阶
-        ((= typ "TCH_STEP") (command "._TSTEP"))
+        ((= eType "TCH_STEP") (command "._TSTEP"))
         ;; 直线楼梯
-        ((= typ "TCH_LINESTAIR") (command "._TLSTAIR"))
+        ((= eType "TCH_LINESTAIR") (command "._TLSTAIR"))
         ;; 双跑楼梯
-        ((= typ "TCH_RECTSTAIR") (command "._TRSTAIR"))
+        ((= eType "TCH_RECTSTAIR") (command "._TRSTAIR"))
         ;; 圆弧楼梯
-        ((= typ "TCH_ARCSTAIR") (command "._TASTAIR"))
+        ((= eType "TCH_ARCSTAIR") (command "._TASTAIR"))
         ;; 任意楼梯
-        ((= typ "TCH_CURVESTAIR") (command "._TCSTAIR"))
+        ((= eType "TCH_CURVESTAIR") (command "._TCSTAIR"))
         ;; 多跑楼梯
-        ((= typ "TCH_MULTISTAIR") (command "._TMULTISTAIR"))
+        ((= eType "TCH_MULTISTAIR") (command "._TMULTISTAIR"))
+        ;; 扶手
+        ((= eType "TCH_HANDRAIL") (command "._THANDRAIL"))
         ;; 坡道
-        ((= typ "TCH_ASCENT") (command "._TASCENT"))
+        ((= eType "TCH_ASCENT") (command "._TASCENT"))
         ;; 阳台
-        ((= typ "TCH_BALCONY") (command "._TBALCONY"))
+        ((= eType "TCH_BALCONY") (command "._TBALCONY"))
         ;; 平板
-        ((= typ "TCH_SLAB") (command "._TSLAB"))
+        ((= eType "TCH_SLAB") (command "._TSLAB"))
         ;; 图块
-        ((= typ "TCH_TCH_BLOCK_INSERT") (command "._TKW"))
+        ((= eType "TCH_TCH_BLOCK_INSERT") (command "._TKW"))
         ; }}}
         (debugMode
          (progn 
@@ -116,20 +130,24 @@
                                         "选择调试文字的位置: \n"
                                       )
            )
-           (command "._text" debugTextInsertPoint 300 0 typ)
+           (command "._text" debugTextInsertPoint 300 0 eType)
          )
         )
         (t
-         (command "._addselected" sset)
+         (progn 
+           (sssetfirst nil nil)
+           (command "._addselected" ss)
+         )
         )
       )
     )
-    (progn 
-      (sssetfirst nil nil)
-      (command "._addselected" "_P")
-    )
   )
 
-
   (princ)
+)
+
+(defun iaso2h:entlast ( / ent tmp )
+    (setq ent (entlast))
+    (while (setq tmp (entnext ent)) (setq ent tmp))
+    ent
 )

@@ -1,4 +1,4 @@
-(defun c:whatis (/ activeDoc sset ename vlObj eType vlType inspectatioinText) 
+(defun c:whatIs (/ activeDoc sset ename vlObj eType vlType inspectatioinText) 
   (vl-load-com)
   (defun *error* (msg) 
     (if osm (setvar 'osmode osm))
