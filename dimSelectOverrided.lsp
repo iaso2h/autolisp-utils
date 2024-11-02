@@ -1,18 +1,24 @@
-(defun c:dimSelectOverrided (/ ss ssNew i ename vlObj textOverrided)
+(defun c:dimSelectOverrided (/ ss ssNew i ename vlaObj textOverrided textMeasurement) 
+  (vl-load-com)
   (setq ss (ssget "_X" '((0 . "*dimension"))))
   (setq i 0)
-  (repeat (sslength ss)
+  (repeat (sslength ss) 
     (setq ename (ssname ss i))
-    (setq vlObj (vlax-ename->vla-object ename))
-    (setq textOverrided (vla-get-textoverride vlObj))
-    (if
-      (not
-        (or (wcmatch textOverrided "*<>*")
+    (setq vlaObj (vlax-ename->vla-object ename))
+    (setq textOverrided (vla-get-textoverride vlaObj))
+    (setq textMeasurement (vla-get-measurement vlaObj))
+    ;; debug
+    ; (print (strcat "textmeasurement: " (rtos textMeasurement 2 2)))
+    ; (print (strcat "textoverride: " textOverrided))
+    (if 
+      (not 
+        (or (wcmatch textOverrided "*<>*") 
             (= textOverrided "")
+            (= (atof textOverrided) textMeasurement)
         )
       )
-      (progn
-        (if (not ssNew)
+      (progn 
+        (if (not ssNew) 
           (setq ssNew (ssadd))
         )
         (ssadd ename ssNew)

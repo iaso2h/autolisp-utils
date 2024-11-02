@@ -1,4 +1,4 @@
-(defun c:dimSelectPrecision (/ ss ss0 ss1 ss2 i ename vlObj vlType textPrecision ans tmp) 
+(defun c:dimSelectPrecision (/ ss ss0 ss1 ss2 i ename vlaObj vlaType textPrecision ans tmp) 
   (defun *error* (msg) 
     (if (not (member msg '("Function cancelled" "函数已取消" "quit / exit abort"))) 
       (princ (strcat "\nError: " msg))
@@ -6,15 +6,16 @@
     (princ)
   )
 
+  (vl-load-com)
   (setq ss (ssget "_X" '((0 . "*dimension"))))
   (setq i 0)
   (repeat (sslength ss) 
     (setq ename (ssname ss i))
-    (setq vlObj (vlax-ename->vla-object ename))
-    (setq vlType (vla-get-ObjectName vlObj))
-    (if (not (eq vlType "AcDb2LineAngularDimension")) 
+    (setq vlaObj (vlax-ename->vla-object ename))
+    (setq vlaType (vla-get-ObjectName vlaObj))
+    (if (not (eq vlaType "AcDb2LineAngularDimension")) 
       (progn 
-        (setq textPrecision (vla-get-primaryunitsprecision vlObj))
+        (setq textPrecision (vla-get-primaryunitsprecision vlaObj))
         (cond 
           ((eq textPrecision 0)
            (progn 

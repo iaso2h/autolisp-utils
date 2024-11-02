@@ -1,4 +1,4 @@
-(defun c:whatIs (/ activeDoc sset ename vlObj eType vlType inspectatioinText) 
+(defun c:whatIs (/ activeDoc sset ename vlaObj eType vlaType inspectatioinText) 
   (vl-load-com)
   (defun *error* (msg) 
     (if osm (setvar 'osmode osm))
@@ -18,17 +18,17 @@
     (progn 
       (if 
         (vl-catch-all-error-p 
-          (setq vlObj (vl-catch-all-apply 'vlax-ename->vla-object (list ename)))
+          (setq vlaObj (vl-catch-all-apply 'vlax-ename->vla-object (list ename)))
         )
-        (setq vlType "No Info")
-        (setq vlType (vla-get-ObjectName vlObj))
+        (setq vlaType "No Info")
+        (setq vlaType (vla-get-ObjectName vlaObj))
       )
 
       (setq eType (cdr (assoc 0 (entget ename))))
       (princ (strcat eType "\n"))
-      (princ (strcat vlType "\n"))
+      (princ (strcat vlaType "\n"))
       (setq inspectatioinText (getpoint "\n插入文字: "))
-      (command "_text" "j" "mc" inspectatioinText 25 0 (strcat eType "\n" vlType))
+      (command "_text" "j" "mc" inspectatioinText 25 0 (strcat eType "\n" vlaType))
 
       (if *searchIncluded* 
         (progn 
