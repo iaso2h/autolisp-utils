@@ -1,6 +1,10 @@
-(defun c:addSelectedPlus (/ debugMode debugTextInsertPoint ss eName eType vlaObj 
-                          savedLastEnt
-                         ) 
+; File: addSeelctedPlus.lsp
+; Author: iaso2h
+; Description: 增强版添加选择, 支持T20V10
+; Version: 0.1.0
+; Last Modified: 2024-11-03
+
+(defun c:addSelectedPlus (/ ss eName eType vlaObj savedLastEnt) 
   (vl-load-com)
   (princ "\n")
   (defun *error* (msg) 
@@ -10,8 +14,6 @@
     )
     (princ)
   )
-
-  (setq debugMode nil)
 
   (if 
     (not 
@@ -400,6 +402,7 @@
              (command pause)
            )
            (setq savedLastEnt (entlast))
+           (copyPropertyGeneric vlaObj (entlast))
            (copyProperty vlaObj 'Elevation savedLastEnt)
          )
         )
@@ -411,6 +414,7 @@
              (command pause)
            )
            (setq savedLastEnt (entlast))
+           (copyPropertyGeneric vlaObj (entlast))
            (copyProperty vlaObj 'Elevation savedLastEnt)
          )
         )
@@ -466,6 +470,7 @@
              (command pause)
            )
            (setq savedLastEnt (entlast))
+           (copyPropertyGeneric vlaObj (entlast))
            (copyProperty vlaObj 'Elevation savedLastEnt)
          )
         )
@@ -490,6 +495,7 @@
              (command pause)
            )
            (setq savedLastEnt (entlast))
+           (copyPropertyGeneric vlaObj (entlast))
            (copyProperty vlaObj 'Elevation savedLastEnt)
          )
         )
@@ -497,7 +503,7 @@
         ((= eType "TCH_SYMB_SECTION")
          (progn 
            (iterCopyProperty 
-             "._TGINSIGHT"
+             "._TGSECTION"
              vlaObj
              (list 'Height 'FontStyle 'ConnerNoteNum 'IsShowIndex 'DrawHeight 
                    'DrawStyle 'DrawLocal 'DrawDirect 'DrawModulus 'TextColor 'SectionType 
@@ -505,42 +511,378 @@
              )
            )
          )
-         (command "._TGSECTION")
         )
         ;; 天正表格
-        ((= eType "TCH_SHEET") (command "._TNEWSHEET"))
-        ;; 台阶
-        ((= eType "TCH_STEP") (command "._TSTEP"))
-        ;; 直线楼梯
-        ((= eType "TCH_LINESTAIR") (command "._TLSTAIR"))
-        ;; 双跑楼梯
-        ((= eType "TCH_RECTSTAIR") (command "._TRSTAIR"))
-        ;; 圆弧楼梯
-        ((= eType "TCH_ARCSTAIR") (command "._TASTAIR"))
-        ;; 任意楼梯
-        ((= eType "TCH_CURVESTAIR") (command "._TCSTAIR"))
-        ;; 多跑楼梯
-        ((= eType "TCH_MULTISTAIR") (command "._TMULTISTAIR"))
-        ;; 扶手
-        ((= eType "TCH_HANDRAIL") (command "._THANDRAIL"))
-        ;; 坡道
-        ((= eType "TCH_ASCENT") (command "._TASCENT"))
-        ;; 阳台
-        ((= eType "TCH_BALCONY") (command "._TBALCONY"))
-        ;; 平板
-        ((= eType "TCH_SLAB") (command "._TSLAB"))
-        ;; 图块
-        ((= eType "TCH_TCH_BLOCK_INSERT") (command "._TKW"))
-        ; }}}
-        (debugMode
+        ((= eType "TCH_SHEET")
          (progn 
-           (setq debugTextInsertPoint (getpoint 
-                                        "选择调试文字的位置: \n"
-                                      )
+           (iterCopyProperty 
+             "._TNEWSHEET"
+             vlaObj
+             (append 
+               (list 'CellTextStyle 'CellTextSize 'CellTextColor 'CellSpaceFactor 
+                     'CellHAlign 'CellVAlign 'CellLineWrap
+               )
+               (list 'HasHLine 'HLineColor 'HLineStyle 'HLineWidth 'RowHeightProperty)
+               (list 
+                 'HasVLine
+                 'VLineColor
+                 'VLineStyle
+                 'VLineWidth
+               )
+               (list 
+                 'HasBorder
+                 'BorderColor
+                 'BorderStyle
+                 'BorderWidth
+               )
+               (list 'Ttile 'TitleTextStyle 'TitleTextSize 'TitleTextColor 
+                     'TitleSpaceFactor 'TitleHAlign 'TitleVAlign 'TitleBaseLineColor 
+                     'TitleBaseLineStyle 'TitleBaseLineWidth 'TitleOutside 'TitleHide
+               )
+               (list 'AllTextStyle 'AllTextSize 'AllTextColor 'AllSpaceFactor 
+                     'AllHAlign 'AllVAlign 'CellLinePropertyInherit 'CellLineWrap
+               )
+               (list 'RowHeight 'RowHeightProperty 'RowInheritSheet 'RowHasBaseLine 
+                     'RowHLineColor 'RowHLineStyle 'RowHLineWidth
+               )
+               (list 'ColWidth 'ColTextStyle 'ColTextSize 'ColTextColor 
+                     'ColSpaceFactor 'ColHAlign 'ColInheritSheet 'ColLineWrap 'ColAllowDrag 
+                     'ColHasRightLine 'ColRLineColor 'ColRLineStyle 'ColRLineWidth
+               )
+             )
            )
-           (command "._text" debugTextInsertPoint 300 0 eType)
          )
         )
+        ;; 台阶
+        ((= eType "TCH_STEP")
+         (progn 
+           (command "._TSTEP")
+           (while (= 1 (getvar "cmdactive")) 
+             (command pause)
+           )
+           (setq savedLastEnt (entlast))
+           (copyPropertyGeneric vlaObj (entlast))
+           (copyProperty vlaObj 'Elevation savedLastEnt)
+         )
+        )
+        ;; 直线楼梯
+        ((= eType "TCH_LINESTAIR")
+         (progn 
+           (iterCopyProperty 
+             "._TLSTAIR"
+             vlaObj
+             (list 'AlongWall)
+           )
+         )
+        )
+        ;; 双跑楼梯
+        ((= eType "TCH_RECTSTAIR")
+         (progn 
+           (iterCopyProperty 
+             "._TRSTAIR"
+             vlaObj
+             (append 
+               (list 'TextHeight 'StruTextHeight 'StruFontStyle 'TextUp 'TextDown)
+               (list 
+                 'SlabThick
+               )
+               (list 
+                 'StepLayer
+                 'RailLayer
+                 'HandRailLayer
+                 'ArrowLayer
+               )
+               (list 
+                 'EvacuateDiaColor
+               )
+             )
+           )
+         )
+        )
+        ;; 圆弧楼梯
+        ((= eType "TCH_ARCSTAIR")
+         (progn 
+           (iterCopyProperty 
+             "._TASTAIR"
+             vlaObj
+             (append 
+               (list 'AlongWall)
+               (list 
+                 'BeamLayer
+                 'StepLayer
+               )
+             )
+           )
+         )
+        )
+        ;; 多跑楼梯
+        ((= eType "TCH_MULTISTAIR")
+         (progn 
+           (iterCopyProperty 
+             "._TMULTISTAIR"
+             vlaObj
+             (append 
+               (list 'TextHeight 'StruTextHeight 'StruFontStyle 'TextUp 'TextDown)
+               (list 
+                 'SlabThick
+               )
+               (list 
+                 'StepLayer
+                 'RailLayer
+                 'HandRailLayer
+                 'ArrowLayer
+               )
+               (list 
+                 'AlongWall
+               )
+             )
+           )
+         )
+        )
+        ;; 双分平行楼梯
+        ((= eType "TCH_PARALLELSTAIR")
+         (progn 
+           (iterCopyProperty 
+             "._TDRAWPARALLELSTAIR"
+             vlaObj
+             (append 
+               (list 'TextHeight 'StruTextHeight 'StruFontStyle 'TextUp 'TextDown)
+               (list 
+                 'SlabThick
+               )
+               (list 
+                 'StepLayer
+                 'RailLayer
+                 'HandRailLayer
+                 'ArrowLayer
+               )
+               (list 
+                 'EvacuateDiaColor
+               )
+             )
+           )
+         )
+        )
+        ;; 双分转角楼梯
+        ((= eType "TCH_CORNERSTAIR")
+         (progn 
+           (iterCopyProperty 
+             ".TDRAWCORNERSTAIR"
+             vlaObj
+             (append 
+               (list 'TextHeight 'StruTextHeight 'StruFontStyle 'TextUp 'TextDown)
+               (list 
+                 'SlabThick
+               )
+               (list 
+                 'StepLayer
+                 'RailLayer
+                 'HandRailLayer
+                 'ArrowLayer
+               )
+             )
+           )
+         )
+        )
+        ;; 双分三跑楼梯
+        ((= eType "TCH_DOUBLEMULSTAIR")
+         (progn 
+           (iterCopyProperty 
+             ".TDRAWDOUBLEMULSTAIR"
+             vlaObj
+             (append 
+               (list 'TextHeight 'StruTextHeight 'StruFontStyle 'TextUp 'TextDown)
+               (list 
+                 'SlabThick
+               )
+               (list 
+                 'StepLayer
+                 'RailLayer
+                 'HandRailLayer
+                 'ArrowLayer
+               )
+             )
+           )
+         )
+        )
+        ;; 交叉楼梯
+        ((= eType "TCH_SCISSORSSTAIR")
+         (progn 
+           (iterCopyProperty 
+             ".TDRAWSCISSORSSTAIR"
+             vlaObj
+             (append 
+               (list 'TextHeight 'StruTextHeight 'StruFontStyle 'TextUp 'TextDown)
+               (list 
+                 'SlabThick
+               )
+               (list 
+                 'StepLayer
+                 'RailLayer
+                 'HandRailLayer
+                 'ArrowLayer
+               )
+               (list 
+                 'EvacuateDiaColor
+               )
+             )
+           )
+         )
+        )
+        ;; 剪刀梯
+        ((= eType "TCH_CROSSSTAIR")
+         (progn 
+           (iterCopyProperty 
+             ".TDRAWCROSSSTAIR"
+             vlaObj
+             (append 
+               (list 'TextHeight 'StruTextHeight 'StruFontStyle 'TextUp 'TextDown)
+               (list 
+                 'SlabThick
+               )
+               (list 
+                 'StepLayer
+                 'RailLayer
+                 'HandRailLayer
+                 'ArrowLayer
+               )
+               (list 
+                 'EvacuateDiaColor
+               )
+             )
+           )
+         )
+        )
+        ;; 三角楼梯
+        ((= eType "TCH_TRIANGLESTAIR")
+         (progn 
+           (iterCopyProperty 
+             ".TDRAWTRIANGLESTAIR"
+             vlaObj
+             (append 
+               (list 'TextHeight 'StruTextHeight 'StruFontStyle 'TextUp 'TextDown)
+               (list 
+                 'SlabThick
+               )
+               (list 
+                 'StepLayer
+                 'RailLayer
+                 'HandRailLayer
+                 'ArrowLayer
+               )
+               (list 
+                 'EvacuateDiaColor
+               )
+             )
+           )
+         )
+        )
+        ;; 转角楼梯
+        ((= eType "TCH_RECTCORNERSTAIR")
+         (progn 
+           (iterCopyProperty 
+             ".TDRAWRECTCORNERSTAIR"
+             vlaObj
+             (append 
+               (list 'TextHeight 'StruTextHeight 'StruFontStyle 'TextUp 'TextDown)
+               (list 
+                 'SlabThick
+               )
+               (list 
+                 'StepLayer
+                 'RailLayer
+                 'HandRailLayer
+                 'ArrowLayer
+               )
+               (list 
+                 'EvacuateDiaColor
+               )
+             )
+           )
+         )
+        )
+        ;; 扶手
+        ((= eType "TCH_HANDRAIL")
+         (progn 
+           (command "._THANDRAIL")
+           (while (= 1 (getvar "cmdactive")) 
+             (command pause)
+           )
+           (setq savedLastEnt (entlast))
+           (copyPropertyGeneric vlaObj (entlast))
+           (copyProperty vlaObj 'Shape savedLastEnt)
+         )
+        )
+        ;; 坡道
+        ((= eType "TCH_ASCENT")
+         (progn 
+           (command "._TASCENT")
+           (while (= 1 (getvar "cmdactive")) 
+             (command pause)
+           )
+           (setq savedLastEnt (entlast))
+           (copyPropertyGeneric vlaObj (entlast))
+         )
+        )
+        ;; 阳台
+        ((= eType "TCH_BALCONY")
+         (progn 
+           (iterCopyProperty 
+             "._TBALCONY"
+             vlaObj
+             (append 
+               (list 'SlabThick)
+               (list 'GroundLayer)
+             )
+           )
+         )
+        )
+        ;; 平板
+        ((= eType "TCH_SLAB")
+         (progn 
+           (command "._TSLAB")
+           (while (= 1 (getvar "cmdactive")) 
+             (command pause)
+           )
+           (setq savedLastEnt (entlast))
+           (copyPropertyGeneric vlaObj (entlast))
+         )
+        )
+        ;; 散水
+        ((= eType "TCH_APRON")
+         (progn 
+           (command "._TOUTLNA")
+           (while (= 1 (getvar "cmdactive")) 
+             (command pause)
+           )
+           (setq savedLastEnt (entlast))
+           (copyPropertyGeneric vlaObj (entlast))
+         )
+        )
+        ;; 三维网架
+        ((= eType "TCH_NETSHELF")
+         (progn 
+           (command ".TNETSHELF")
+           (while (= 1 (getvar "cmdactive")) 
+             (command pause)
+           )
+           (setq savedLastEnt (entlast))
+           (copyPropertyGeneric vlaObj (entlast))
+         )
+        )
+        ;; 图块
+        ((= eType "TCH_TCH_BLOCK_INSERT")
+         (progn 
+           (iterCopyProperty 
+             "._TKW"
+             vlaObj
+             (list)
+           )
+         )
+        )
+        ; }}}
+
+        ;; Default
         (t
          (progn 
            (sssetfirst nil nil)
@@ -582,11 +924,11 @@
 )
 (defun copyPropertyGeneric (vlaObj ent) 
   (if (= (getvar "pstylemode") 0) 
-    (copyProperty vlaObj 'PlotStyleName savedLastEnt)
+    (copyProperty vlaObj 'PlotStyleName ent)
   )
   ; (vla-put-color vlaObj
   ;                (vla-get-color
-  ;                  (vlax-ename->vla-object (iaso2h:entlast))
+  ;                  (vlax-ename->vla-object (ent))
   ;                )
   ; )
   ; (copyProperty vlaObj 'Color ent)
@@ -600,9 +942,4 @@
 
   (copyProperty vlaObj 'Material ent)
   (copyProperty vlaObj 'ShadowType ent)
-)
-(defun iaso2h:entlast (/ ent tmp) 
-  (setq ent (entlast))
-  (while (setq tmp (entnext ent)) (setq ent tmp))
-  ent
 )
