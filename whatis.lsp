@@ -32,8 +32,8 @@
 
       (if *searchIncluded* 
         (progn 
-          (load "LayerSetXline.lsp")
-          (layerSetXline)
+          (load "util.lsp")
+          (iaso2h:layerSetXline savedEntLast)
         )
       )
     )

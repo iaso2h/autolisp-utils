@@ -1,12 +1,15 @@
-(defun c:dimSelectPrecision (/ ss ss0 ss1 ss2 i ename vlaObj vlaType textPrecision ans tmp) 
+(defun c:dimSelectPrecision (/ ss ss0 ss1 ss2 i ename vlaObj vlaType textPrecision 
+                             ans tmp
+                            ) 
   (defun *error* (msg) 
     (if (not (member msg '("Function cancelled" "函数已取消" "quit / exit abort"))) 
       (princ (strcat "\nError: " msg))
     )
     (princ)
   )
-
+  (princ "\n")
   (vl-load-com)
+
   (setq ss (ssget "_X" '((0 . "*dimension"))))
   (setq i 0)
   (repeat (sslength ss) 
@@ -53,30 +56,30 @@
       (setq ans "0位小数")
     )
     (initget "0位小数 1位小数 2位以及2位以上小数")
-    (if (setq tmp (getkword (strcat "\n选择标注精确度[0位小数/1位小数/2位以及2位以上小数] <" ans ">: "))) 
+    (if (setq tmp (getkword (strcat "选择标注精确度[0位小数/1位小数/2位以及2位以上小数] <" ans ">: \n"))) 
       (setq ans tmp)
     )
     (cond 
       ((eq ans "0位小数")
-       (if ss0
+       (if ss0 
          (sssetfirst nil ss0)
-         (prompt "\n提示：没有精确度为0位小数的标注")
+         (prompt "提示：没有精确度为0位小数的标注\n")
        )
       )
       ((eq ans "1位小数")
-       (if ss1
+       (if ss1 
          (sssetfirst nil ss1)
-         (prompt "\n提示：没有精确度为1位小数的标注")
+         (prompt "提示：没有精确度为1位小数的标注 \n")
        )
       )
       (t
-       (if ss2
+       (if ss2 
          (sssetfirst nil ss2)
-         (prompt "\n提示：没有精确度为2位以及2位小数以上的标注")
+         (prompt "提示：没有精确度为2位以及2位小数以上的标注 \n")
        )
       )
     )
-
-    (princ)
   )
+
+  (princ)
 )

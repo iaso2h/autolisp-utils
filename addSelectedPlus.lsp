@@ -1,8 +1,8 @@
 ; File: addSeelctedPlus.lsp
 ; Author: iaso2h
 ; Description: 增强版添加选择, 支持T20V10
-; Version: 0.1.0
-; Last Modified: 2024-11-03
+; Version: 0.1.1
+; Last Modified: 2024-11-04
 
 (defun c:addSelectedPlus (/ ss eName eType vlaObj savedLastEnt) 
   (vl-load-com)
@@ -170,14 +170,13 @@
         ;; 柱
         ((= eType "TCH_COLUMN")
          (progn 
-           (setq savedLastEnt (entlast))
            (if (= (vlax-get-property vlaObj 'StruSectionShapeText) "矩形") 
              (progn 
                (command "._TGCOLUMN")
                (while (= 1 (getvar "cmdactive")) 
                  (command pause)
                )
-               (while (setq savedLastEnt (entnext savedLastEnt)) 
+               (while (setq savedLastEnt (entnext (entlast))) 
                  (progn 
                    (copyPropertyGeneric vlaObj savedLastEnt)
 
@@ -200,7 +199,7 @@
                (while (= 1 (getvar "cmdactive")) 
                  (command pause)
                )
-               (while (setq savedLastEnt (entnext savedLastEnt)) 
+               (while (setq savedLastEnt (entnext (entlast))) 
                  (progn 
                    (copyPropertyGeneric vlaObj savedLastEnt)
 
@@ -895,14 +894,13 @@
   (princ)
 )
 (defun iterCopyProperty (cmdName vlaObj propertyList / savedLastEnt) 
-  (setq savedLastEnt (entlast))
   (command cmdName)
 
   (while (= 1 (getvar "cmdactive")) 
     (command pause)
   )
 
-  (while (setq savedLastEnt (entnext savedLastEnt)) 
+  (while (setq savedLastEnt (entnext (entlast))) 
     (progn 
       (copyPropertyGeneric vlaObj savedLastEnt)
       (mapcar 
@@ -914,32 +912,30 @@
     )
   )
 )
-(defun copyProperty (vlaObj symbol ent) 
+(defun copyProperty (vlaObj symbol entTgt) 
   (if (vlax-property-available-p vlaObj symbol) 
-    (vlax-put-property (vlax-ename->vla-object ent) 
+    (vlax-put-property (vlax-ename->vla-object entTgt) 
                        symbol
                        (vlax-get-property vlaObj symbol)
     )
   )
 )
-(defun copyPropertyGeneric (vlaObj ent) 
+(defun copyPropertyGeneric (vlaObjSrc entTgt) 
   (if (= (getvar "pstylemode") 0) 
-    (copyProperty vlaObj 'PlotStyleName ent)
+    (copyProperty vlaObjSrc 'PlotStyleName entTgt)
   )
-  ; (vla-put-color vlaObj
-  ;                (vla-get-color
-  ;                  (vlax-ename->vla-object (ent))
-  ;                )
-  ; )
+  (vla-put-truecolor 
+    (vlax-ename->vla-object entTgt)
+    (vla-get-truecolor vlaObjSrc)
+  )
   ; (copyProperty vlaObj 'Color ent)
-  (copyProperty vlaObj 'Layer ent)
-  (copyProperty vlaObj 'Linetype ent)
+  (copyProperty vlaObjSrc 'Layer entTgt)
+  (copyProperty vlaObjSrc 'Linetype entTgt)
   ; (copyProperty vlaObj 'LinetypeScale ent)
   ; (copyProperty vlaObj 'Lineweight ent)
-  (copyProperty vlaObj 'EntityTransparency ent)
-  (copyProperty vlaObj 'LayoutRotation ent)
-  (copyProperty vlaObj 'ObjectControl ent)
-
-  (copyProperty vlaObj 'Material ent)
-  (copyProperty vlaObj 'ShadowType ent)
+  (copyProperty vlaObjSrc 'EntityTransparency entTgt)
+  (copyProperty vlaObjSrc 'LayoutRotation entTgt)
+  (copyProperty vlaObjSrc 'ObjectControl entTgt)
+  (copyProperty vlaObjSrc 'Material entTgt)
+  (copyProperty vlaObjSrc 'ShadowType entTgt)
 )
