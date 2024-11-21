@@ -1,19 +1,19 @@
 ; Credit: https://www.cadtutor.net/forum/topic/62651-convert-quotattributes-valuequot-to-text/
 ; Converts attributes (attr. definitions, tags) to plain texts
-(defun attr2TextConvert (style / ss ssNew ssl i eNameSrc eNameNew entNew grp grplst 
-                          addg
-                         ) 
+(defun attr2TextConvert (style / acDoc ss ssNew ssl i eNameSrc eNameNew entNew grp grplst 
+                         addg
+                        ) 
   (vl-load-com)
   (princ "\n")
   (defun *error* (msg) 
-    (if osm (setvar 'osmode osm))
     (if (not (member msg '("Function cancelled" "quit / exit abort" "函数已取消"))) 
-      (princ (strcat "\nError: " msg))
+      (princ (strcat "Error: " msg "\n"))
     )
     (princ)
   )
+  (setq acDoc (vla-get-activedocument (vlax-get-acad-object)))
+  (vla-startundomark acDoc)
 
-  (vl-cmdf "undo" "be")
   (if (setq ss (ssget style '((0 . "ATTDEF")))) 
     (progn 
       (setq ssl (sslength ss)
@@ -55,7 +55,7 @@
 
       (if (= style "_X") 
         (progn 
-          (princ (strcat (rtos ssl) "个属性定义已被转换\n"))
+          (princ (strcat (rtos ssl 2 0) "个属性定义已被转换\n"))
         )
         (princ "所选属性定义已被转换\n")
       )
@@ -63,7 +63,7 @@
     (princ "无属性定义可以转换\n")
   )
 
-  (vl-cmdf "undo" "e")
+  (vla-endundomark acDoc)
   (if ssNew 
     (sssetfirst nil ssNew)
   )
