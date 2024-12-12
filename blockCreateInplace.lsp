@@ -2,7 +2,8 @@
 ;; Creates a block instantly out of the objects that you select
 ;; Reference: http://forums.autodesk.com/t5/Visual-LISP-AutoLISP-and-General/Quick-block/td-p/3454228
 ;;
-(defun c:blockCreateInplace (/ ss insertPoint cnt blockName timeStamp) 
+(defun c:blockCreateInplace (/ ss i insertPoint savedEntLast ent) 
+  (load "attr2Text.lsp")
   (setq cmd (getvar 'cmdecho))
   (setvar 'cmdecho 0)
   (princ "\n")
@@ -20,6 +21,29 @@
     )
     (progn 
       (command "undo" "be")
+      (setq savedEntLast (entlast))
+      (setq i 0)
+      (while (< i (sslength ss)) 
+        (setq ent (ssname ss i))
+        (setq eName (cdr (assoc 0 (entget ent))))
+        (cond 
+          ((eq eName "ATTDEF")
+           (ssadd (ssname (attr2TextConvert (ssadd ent (ssadd)) t) 0) ss)
+          )
+          ((eq eName "INSERT")
+           (progn 
+             (command "_explode" ent)
+             (while (setq ent (entnext savedEntLast)) 
+               (setq savedEntLast ent)
+               (ssadd savedEntLast ss)
+             )
+           )
+          )
+        )
+
+        (setq i (1+ i))
+      )
+
       (insertBlock insertPoint ss)
     )
   )
@@ -30,75 +54,6 @@
   (princ)
 )
 
-
-(defun c:blockCreateInplaceByBlock (/ ssNew entLastSaved ent vla) 
-  (vl-load-com)
-  (setq cmd (getvar 'cmdecho))
-  (setvar 'cmdecho 0)
-  (princ "\n")
-  (defun *error* (msg) 
-    (if (not (member msg '("Function cancelled" "quit / exit abort" "函数已取消"))) 
-      (princ (strcat "Error: " msg "\n"))
-    )
-    (princ)
-  )
-
-  (if 
-    (and 
-      (setq ss (ssget "_:L"))
-      (setq insertPoint (getpoint "请指定插入点：\n"))
-    )
-    (progn 
-      (setq entLastSaved (entlast))
-      (command "undo" "be")
-      ; Explode 3 times in a row
-      (repeat 3 
-        ; Add unexplodable entities from old selection set
-        (setq ssNew (ssadd))
-        (command "_explode" ss)
-        (setq i -1)
-        (repeat (sslength ss) 
-          (setq i (+ 1 i))
-          (setq ent (ssname ss i))
-          (if 
-            (and ent 
-                 (entget ent)
-            )
-            (ssadd ent ssNew)
-          )
-        )
-        ; Add new entities from exploded elements
-        ; TODO: convert attributes to text properly
-        (while (setq ent (entnext entLastSaved)) 
-          (setq entLastSaved ent)
-          (ssadd entLastSaved ssNew)
-        )
-
-        ; Entering next loop
-        (setq ss ssNew)
-      )
-
-
-      ; Change entity to byblock
-      (setq i -1)
-      (repeat (sslength ssNew) 
-        (setq i (+ 1 i))
-        (setq ent (ssname ssNew i))
-        (setq vla (vlax-ename->vla-object ent))
-        (vl-catch-all-apply 'vla-put-color (list vla 0))
-      )
-
-      (insertBlock insertPoint ssNew)
-    )
-  )
-
-  (command "undo" "e")
-  (setvar 'cmdecho cmd)
-
-  (princ)
-)
-
-
 (defun insertBlock (insertPoint ss / timeStamp cnt blockName) 
   (setq timeStamp (rtos (getvar "CDATE") 2 6))
   (setq cnt       1
@@ -107,8 +62,23 @@
   (while (tblsearch "BLOCK" blockName) 
     (setq blockName (strcat timeStamp (itoa (setq cnt (1+ cnt)))))
   )
-  (command "_.-Block" blockName insertPoint ss "")
+  (command "_.-block" blockName insertPoint ss "")
   (command "_.-insert" blockName insertPoint "" "" "")
 
   (princ)
+)
+
+(defun c:blockCreateInplaceByBlock (/ cmd ss) 
+  (setq cmd (getvar 'cmdecho))
+  (setvar 'cmdecho 0)
+
+  (c:blockCreateInplace)
+  (setq ss (ssadd))
+  (ssadd (entlast) ss)
+
+  (load "blockColor.lsp")
+  (blockColorSelectionSet ss)
+
+  (command "undo" "e")
+  (setvar 'cmdecho cmd)
 )

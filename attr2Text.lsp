@@ -1,21 +1,21 @@
 ; Credit: https://www.cadtutor.net/forum/topic/62651-convert-quotattributes-valuequot-to-text/
 ; Converts attributes (attr. definitions, tags) to plain texts
-(defun attr2TextConvert (style / acDoc ss ssNew ssl i eNameSrc eNameNew entNew grp grplst 
-                         addg
+(defun attr2TextConvert (ss silentChk / acDoc ssNew ssl i eNameSrc eNameNew entNew 
+                         grp grplst addg
                         ) 
-  (vl-load-com)
-  (princ "\n")
-  (defun *error* (msg) 
-    (if (not (member msg '("Function cancelled" "quit / exit abort" "函数已取消"))) 
-      (princ (strcat "Error: " msg "\n"))
-    )
-    (princ)
-  )
-  (setq acDoc (vla-get-activedocument (vlax-get-acad-object)))
-  (vla-startundomark acDoc)
-
-  (if (setq ss (ssget style '((0 . "ATTDEF")))) 
+  (if ss 
     (progn 
+      (vl-load-com)
+      (princ "\n")
+      (defun *error* (msg) 
+        (if (not (member msg '("Function cancelled" "quit / exit abort" "函数已取消"))) 
+          (princ (strcat "Error: " msg "\n"))
+        )
+        (princ)
+      )
+      (setq acDoc (vla-get-activedocument (vlax-get-acad-object)))
+      (vla-startundomark acDoc)
+
       (setq ssl (sslength ss)
             i   0
       )
@@ -53,23 +53,36 @@
         (setq i (1+ i))
       )
 
-      (if (= style "_X") 
+      (if (null silentChk) 
         (progn 
           (princ (strcat (rtos ssl 2 0) "个属性定义已被转换\n"))
+          (vla-endundomark acDoc)
         )
-        (princ "所选属性定义已被转换\n")
+      )
+      (princ "无属性定义可以转换\n")
+
+      (if (and (null silentChk) ssNew) 
+        (sssetfirst nil ssNew)
       )
     )
-    (princ "无属性定义可以转换\n")
   )
 
-  (vla-endundomark acDoc)
-  (if ssNew 
-    (sssetfirst nil ssNew)
+  ssNew
+)
+
+(defun C:attr2Text () 
+  (attr2TextConvert 
+    (setq ss (ssget "_:L" '((0 . "ATTDEF"))))
+    nil
   )
 
   (princ)
 )
+(defun C:attr2TextAll () 
+  (attr2TextConvert 
+    (setq ss (ssget "_X" '((0 . "ATTDEF"))))
+    nil
+  )
 
-(defun C:attr2Text () (attr2TextConvert "_:L"))
-(defun C:attr2TextAll () (attr2TextConvert "_X"))
+  (princ)
+)
