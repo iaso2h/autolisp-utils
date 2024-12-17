@@ -53,17 +53,17 @@
         (setq i (1+ i))
       )
 
+      (vla-endundomark acDoc)
+
       (if (null silentChk) 
-        (progn 
-          (princ (strcat (rtos ssl 2 0) "个属性定义已被转换\n"))
-          (vla-endundomark acDoc)
+        (if (> ssl 1) 
+          (progn (princ (strcat (rtos ssl 2 0) "个属性定义已被转换\n")) 
+                 (sssetfirst nil ssNew)
+          )
+          (princ "无属性定义可以转换\n")
         )
       )
-      (princ "无属性定义可以转换\n")
 
-      (if (and (null silentChk) ssNew) 
-        (sssetfirst nil ssNew)
-      )
     )
   )
 

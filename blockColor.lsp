@@ -1,37 +1,44 @@
 ; Credit: http://www.mjtd.com/thread-74564-1-1.html
-(defun c:blockColor (/ ss blks i obj blkNames defaultBlkColor) 
-
-
-  (if (setq ss (ssget "_:L" '((0 . "insert")))) 
-    (progn 
-      (setq defaultBlkColor (acad_colordlg 1))
-      (setq blks (vla-get-blocks (vla-get-activedocument (vlax-get-acad-object))))
-      (repeat (setq i (sslength ss)) 
-        (setq obj (vlax-ename->vla-object (ssname ss (setq i (1- i)))))
-        (chBlockColor blks obj defaultBlkColor)
-      )
-    )
-  )
-  
+(defun c:blockColor () 
+  (blockColorSelectionSet nil nil nil)
   (princ)
 )
 
-(defun blockColorSelectionSet (ss / blks i obj blkNames defaultBlkColor) 
+(defun blockColorSelectionSet (ss blkColor skipColorPrompt / blks i obj blkNames) 
+  (vl-load-com)
+  (princ "\n")
+  (defun *error* (msg) 
+    (if (not (member msg '("Function cancelled" "quit / exit abort" "函数已取消"))) 
+      (princ (strcat "Error: " msg "\n"))
+    )
+    (princ)
+  )
+
+  (if (null ss) 
+    (setq ss (ssget "_:L" '((0 . "insert"))))
+  )
+
 
   (if ss 
     (progn 
-      (setq defaultBlkColor (acad_colordlg 1))
+      ; Set default value to blkColor
+      (if (null blkColor) 
+        (setq blkColor 1)
+      )
+      (if (null skipColorPrompt) 
+        (setq blkColor (acad_colordlg blkColor))
+      )
+
       (setq blks (vla-get-blocks (vla-get-activedocument (vlax-get-acad-object))))
       (repeat (setq i (sslength ss)) 
         (setq obj (vlax-ename->vla-object (ssname ss (setq i (1- i)))))
-        (chBlockColor blks obj defaultBlkColor)
+        (chBlockColor blks obj blkColor)
       )
     )
   )
 
   (princ)
 )
-
 
 (defun chBlockColor (blks Obj color / blkName oName) 
   (if 
@@ -80,4 +87,5 @@
     )
   )
   (vla-UpDate obj)
+  (princ)
 )
