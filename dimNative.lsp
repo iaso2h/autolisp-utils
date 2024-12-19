@@ -1,0 +1,15 @@
+(defun c:dimNative (/ ss) 
+  (princ "\n")
+  (defun *error* (msg) 
+    (if (not (member msg '("Function cancelled" "quit / exit abort" "函数已取消"))) 
+      (princ (strcat "Error: " msg "\n"))
+    )
+    (princ)
+  )
+
+  (if (setq ss (ssget "_:L" '((0 . "*DIMENSION,LEADER")))) 
+    (sssetfirst nil ss)
+  )
+
+  (princ)
+)
