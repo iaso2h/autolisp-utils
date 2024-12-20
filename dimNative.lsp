@@ -1,4 +1,4 @@
-(defun c:dimNative (/ ss) 
+(defun c:dimNative (/ ans ss filterType) 
   (princ "\n")
   (defun *error* (msg) 
     (if (not (member msg '("Function cancelled" "quit / exit abort" "函数已取消"))) 
@@ -6,8 +6,21 @@
     )
     (princ)
   )
-
-  (if (setq ss (ssget "_:L" '((0 . "*DIMENSION,LEADER")))) 
+  (initget "Y N")
+  (setq ans (getkword "选择功能[包括引出线(Y)/排除引出线(N)]<N>：\n"))
+  (print ans)
+  (cond 
+    ((eq ans "Y")
+     (setq filterType '((0 . "*DIMENSION,LEADER")))
+    )
+    ((eq ans "N")
+     (setq filterType '((0 . "*DIMENSION")))
+    )
+    (t
+     (setq filterType '((0 . "*DIMENSION")))
+    )
+  )
+  (if (setq ss (ssget "_:L" filterType)) 
     (sssetfirst nil ss)
   )
 

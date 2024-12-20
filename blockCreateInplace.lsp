@@ -13,7 +13,15 @@
     )
     (princ)
   )
+  (blockPrompt t t)
 
+  (command "undo" "e")
+  (setvar 'cmdecho cmd)
+
+  (princ)
+)
+
+(defun blockPrompt (convertAttrChk NestedBlkChk / ss i insertPoint savedEntLast ent) 
   (if 
     (and 
       (setq ss (ssget "_:L"))
@@ -23,35 +31,38 @@
       (command "undo" "be")
       (setq savedEntLast (entlast))
       (setq i 0)
-      (while (< i (sslength ss)) 
-        (setq ent (ssname ss i))
-        (setq eName (cdr (assoc 0 (entget ent))))
-        (cond 
-          ((eq eName "ATTDEF")
-           (ssadd (ssname (attr2TextConvert (ssadd ent (ssadd)) t) 0) ss)
-          )
-          ((eq eName "INSERT")
-           (progn 
-             (command "_explode" ent)
-             (while (setq ent (entnext savedEntLast)) 
-               (setq savedEntLast ent)
-               (ssadd savedEntLast ss)
+      (if (or convertAttrChk NestedBlkChk) 
+        (while (< i (sslength ss)) 
+          (setq ent (ssname ss i))
+          (setq eName (cdr (assoc 0 (entget ent))))
+          (cond 
+            ((and 
+               convertAttrChk
+               (eq eName "ATTDEF")
              )
-           )
+             (ssadd (ssname (attr2TextConvert (ssadd ent (ssadd)) t) 0) ss)
+            )
+            ((and 
+               (null NestedBlkChk)
+               (eq eName "INSERT")
+             )
+             (progn 
+               (command "_explode" ent)
+               (while (setq ent (entnext savedEntLast)) 
+                 (setq savedEntLast ent)
+                 (ssadd savedEntLast ss)
+               )
+             )
+            )
           )
-        )
 
-        (setq i (1+ i))
+          (setq i (1+ i))
+        )
       )
 
       (insertBlock insertPoint ss)
     )
   )
-
-  (command "undo" "e")
-  (setvar 'cmdecho cmd)
-
-  (princ)
 )
 
 (defun insertBlock (insertPoint ss / timeStamp cnt blockName) 
@@ -70,6 +81,7 @@
 
 (defun c:blockCreateInplaceByBlock (/ cmd ss blockColor blockEnt blockObj) 
   (vl-load-com)
+    (load "attr2Text.lsp")
   (princ "\n")
   (defun *error* (msg) 
     (if (not (member msg '("Function cancelled" "quit / exit abort" "函数已取消"))) 
@@ -80,7 +92,7 @@
   (setq cmd (getvar 'cmdecho))
   (setvar 'cmdecho 0)
 
-  (c:blockCreateInplace)
+  (blockPrompt t nil)
   (setq blockEnt (entlast))
   (setq blockObj (vlax-ename->vla-object blockEnt))
   (setq blockColor (acad_colordlg 1))
@@ -89,7 +101,7 @@
   )
   (vla-put-color blockObj blockColor)
   (vla-put-layer blockObj "0")
-  
+
   (setq ss (ssadd))
   (ssadd blockEnt ss)
   (load "blockColor.lsp")
@@ -97,5 +109,5 @@
   (command "undo" "e")
   (setvar 'cmdecho cmd)
 
-  ; (princ)
+  (princ)
 )
