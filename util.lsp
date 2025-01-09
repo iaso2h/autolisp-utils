@@ -40,3 +40,59 @@
   (while (setq tmp (entnext ent)) (setq ent tmp))
   ent
 )
+
+;;-------------------=={ UnFormat String }==------------------;;
+;;                                                            ;;
+;;  Returns a string with all MText formatting codes removed. ;;
+;;------------------------------------------------------------;;
+;;  Author: Lee Mac, Copyright © 2011 - www.lee-mac.com       ;;
+;;------------------------------------------------------------;;
+;;  Arguments:                                                ;;
+;;  str - String to Process                                   ;;
+;;  mtx - MText Flag (T if string is for use in MText)        ;;
+;;------------------------------------------------------------;;
+;;  Returns:  String with formatting codes removed            ;;
+;;------------------------------------------------------------;;
+
+(defun LM:UnFormat ( str mtx / _replace rx )
+
+    (defun _replace ( new old str )
+        (vlax-put-property rx 'pattern old)
+        (vlax-invoke rx 'replace str new)
+    )
+    (if (setq rx (vlax-get-or-create-object "VBScript.RegExp"))
+        (progn
+            (setq str
+                (vl-catch-all-apply
+                    (function
+                        (lambda ( )
+                            (vlax-put-property rx 'global     actrue)
+                            (vlax-put-property rx 'multiline  actrue)
+                            (vlax-put-property rx 'ignorecase acfalse) 
+                            (foreach pair
+                               '(
+                                    ("\032"    . "\\\\\\\\")
+                                    (" "       . "\\\\P|\\n|\\t")
+                                    ("$1"      . "\\\\(\\\\[ACcFfHLlOopQTW])|\\\\[ACcFfHLlOopQTW][^\\\\;]*;|\\\\[ACcFfHLlOopQTW]")
+                                    ("$1$2/$3" . "([^\\\\])\\\\S([^;]*)[/#\\^]([^;]*);")
+                                    ("$1$2"    . "\\\\(\\\\S)|[\\\\](})|}")
+                                    ("$1"      . "[\\\\]({)|{")
+                                )
+                                (setq str (_replace (car pair) (cdr pair) str))
+                            )
+                            (if mtx
+                                (_replace "\\\\" "\032" (_replace "\\$1$2$3" "(\\\\[ACcFfHLlOoPpQSTW])|({)|(})" str))
+                                (_replace "\\"   "\032" str)
+                            )
+                        )
+                    )
+                )
+            )
+            (vlax-release-object rx)
+            (if (null (vl-catch-all-error-p str))
+                str
+            )
+        )
+    )
+)
+(vl-load-com)

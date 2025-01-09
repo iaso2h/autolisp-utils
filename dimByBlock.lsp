@@ -1,0 +1,38 @@
+(defun c:dimByBlock (/ ss ent obj) 
+  (princ "\n")
+  (defun *error* (msg) 
+    (if (not (member msg '("Function cancelled" "quit / exit abort" "函数已取消"))) 
+      (princ (strcat "Error: " msg "\n"))
+    )
+    (princ)
+  )
+
+  (if (setq ss (ssget "_:L" '((0 . "*DIMENSION,LEADER")))) 
+    (progn 
+      (command "undo" "be")
+      (setq i 0)
+      (while (< i (sslength ss)) 
+        (setq ent (ssname ss i))
+        (setq obj (vlax-ename->vla-object ent))
+        (vla-put-DimensionLineColor obj 0)
+        (if (vlax-property-available-p obj 'TextColor) 
+          (vla-put-TextColor obj 0)
+        )
+        (if (vlax-property-available-p obj 'ExtensionLineColor) 
+          (vla-put-ExtensionLineColor obj 0)
+        )
+
+        (setq i (1+ i))
+      )
+      (command "undo" "e")
+      (sssetfirst nil ss)
+      (princ 
+        (strcat (rtos (sslength ss) 2 0) 
+                "个标注的颜色已改为随图块\n"
+        )
+      )
+    )
+  )
+
+  (princ)
+)
